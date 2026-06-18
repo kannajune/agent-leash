@@ -1,0 +1,159 @@
+# agent-leash — Session Handoff / Build Doc
+
+> **Read this first.** This is a fresh-session handoff for continuing the build.
+> Project lives at `/Users/kd/Sid/agentic-base/agent-leash/`. Owner GitHub: **kannajune**.
+
+---
+
+## What this is & why
+
+**The problem:** Claude Code (and other AI coding agents) constantly ask for
+permission to run tools. Today you must sit at the laptop to approve. People
+either babysit it or `--dangerously-skip-permissions` (approve everything).
+
+**The idea:** approve/reject — *and correct* — the agent's actions **from your
+phone**, so you can let it run while away from the keyboard without blindly
+approving everything.
+
+**Key decision: NOT a native iOS/Android app.** We plug into Claude Code's
+built-in **`PreToolUse` hook** and use a tiny relay + a phone-friendly **web
+page** (delivered via ntfy or Telegram push). The phone just opens a link.
+
+---
+
+## Verified Claude Code facts (checked vs docs, June 16 2026)
+
+- **No native remote-approval feature exists.** Claude Code has "Remote Control"
+  (steer a running session from phone/web) but it does **not** approve permission
+  prompts remotely. → our niche is real and unfilled.
+- **`PreToolUse` hook can allow/deny/ask.** Output contract:
+  ```json
+  { "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "allow" | "deny" | "ask",
+      "permissionDecisionReason": "string",
+      "updatedInput": { }   // OPTIONAL: rewrite the tool input before it runs
+  }}
+  ```
+- **The hook is blocking/synchronous** — Claude waits for it. So it can
+  **long-poll** a relay until the phone responds. **Default timeout: 600s (10 min)**,
+  configurable per-hook via `"timeout"`. Keep our wait under that.
+- **`deny` + `permissionDecisionReason` is fed BACK to Claude** as guidance →
+  this is how "reject with a correction / rewrite" works. `updatedInput` lets the
+  phone edit the actual command.
+- **Deny rules in `settings.json` always win** over a hook's `allow` (safety floor).
+- **`Notification` hook** (matcher `permission_prompt`) can *alert* but **cannot
+  approve** — so `PreToolUse` is the right integration point.
+- Docs: https://code.claude.com/docs/en/hooks.md · /hooks-guide.md · /permissions.md
+
+---
+
+## Architecture
+
+```
+Claude Code (laptop)
+  └─ PreToolUse hook = `agent-leash-hook` (reads tool JSON on stdin)
+       ├─ auto-allow safe tools (Read/Glob/Grep/LS) -> return allow immediately
+       └─ else: POST /request to relay  ──────────────┐
+                                                       ▼
+                                         agent-leash relay (FastAPI)
+                                           ├─ sends push (ntfy / Telegram) with a link
+                                           └─ serves mobile approval page  /r/{id}
+                                                       ▲
+   hook long-polls GET /decision/{id} ────────────────┘   (you tap on phone:
+       └─ returns {allow|deny, reason, updatedInput}        Approve / Reject+correct / Edit input)
+  └─ Claude proceeds / blocks / adjusts
+```
+
+---
+
+## File map (already scaffolded)
+
+```
+agent-leash/
+├── HANDOFF.md                     ← this file
+├── README.md                      ← user-facing
+├── LICENSE                        ← MIT
+├── pyproject.toml                 ← console scripts: agent-leash-relay, agent-leash-hook
+├── examples/claude-settings-snippet.json   ← how to register the hook
+├── src/agent_leash/
+│   ├── config.py                  ← env-var config (relay url, timeout, ntfy/telegram, auto-allow)
+│   ├── notify.py                  ← send push (ntfy + telegram), stdlib-only
+│   ├── relay.py                   ← FastAPI relay: /request /decision/{id} /r/{id}
+│   └── hook.py                    ← PreToolUse hook: stdin -> relay -> hookSpecificOutput
+└── tests/                         ← EMPTY — needs tests
+```
+
+---
+
+## Status
+
+### Done (scaffold) — LOCAL LOOP VERIFIED WORKING ✅
+- [x] Project structure, pyproject (pip/uvx installable), MIT, .gitignore
+- [x] `config.py`, `notify.py` (ntfy + Telegram), `relay.py` (FastAPI + mobile page), `hook.py`
+- [x] Example Claude settings snippet
+- [x] Verified the Claude Code hook contract
+- [x] `python-multipart` added to deps (relay Form endpoints need it)
+- [x] **Smoke-tested end-to-end** in a `.venv`: relay starts; hook auto-allows safe tools;
+      hook posts→polls; "phone" reject-with-correction returns `deny` + reason to the hook;
+      relay-down falls back to `ask`. All confirmed working.
+
+### TODO (next session, in order)
+1. **Write tests** (`tests/`): relay request→decide→poll cycle (use FastAPI TestClient),
+   hook auto-allow path, hook timeout fallback. Wire a CI workflow (copy mcp-architect's `.github/workflows/ci.yml`).
+5. **Real hook test in Claude Code**: register the snippet in `~/.claude/settings.json`,
+   set `AGENT_LEASH_NTFY_TOPIC`, install the ntfy app on the phone, run a Claude Code
+   command, approve from the phone. THIS is the demo.
+6. **Remote reachability**: for a real phone, the relay's `PUBLIC_URL` must be reachable.
+   Document using `cloudflared`/`ngrok` tunnel, or running the relay on a small VPS.
+   (Security: the relay exposes tool calls — add a shared-secret token on endpoints.)
+7. **Harden**: add an auth token (header/query) so randoms can't hit `/r/{id}`;
+   expire old requests; optional allow/deny rules by command pattern.
+8. **Polish for launch**: README demo GIF (approve on phone → Claude continues),
+   then follow the OSS launch process below.
+
+---
+
+## Decisions already made
+- **Name:** `agent-leash` (control metaphor; "you hold the reins remotely").
+- **Open source, MIT.** Paid is premature; would kill trust/adoption for a
+  security-adjacent tool. Future "open-core" monetization = hosted relay / team
+  audit logs — NOT now.
+- **Start with Claude Code** (its hooks expose the exact integration point).
+  Keep the relay + phone side **agent-agnostic** so Cursor/Cline/Aider can be added later.
+- **No native app** — phone web page delivered via ntfy/Telegram.
+- **Phone actions:** Approve · Reject (with correction text → fed to Claude) · Edit input (JSON → `updatedInput`).
+- **Safety:** auto-allow read-only tools; fallback on timeout/relay-down = `deny` (configurable); deny rules in settings still win.
+
+---
+
+## How to run the local loop (quick)
+```bash
+cd /Users/kd/Sid/agentic-base/agent-leash
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+# terminal 1: relay
+.venv/bin/agent-leash-relay
+# terminal 2: simulate a hook call
+echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf build"},"cwd":"/tmp"}' \
+  | AGENT_LEASH_RELAY_URL=http://127.0.0.1:8787 .venv/bin/agent-leash-hook
+# open the printed approve URL in a browser, click Approve/Reject, watch the hook return.
+```
+Set `AGENT_LEASH_NTFY_TOPIC=<your-unique-topic>` and install the **ntfy** app to get phone pushes.
+
+---
+
+## Risks / open questions
+- Claude Code hook API could change — pin to the documented contract; OSS lets community track it.
+- 10-min hook timeout bounds how long it can wait for the phone.
+- Relay sees tool calls (sensitive) → must add auth + encourage self-host; never log full inputs by default.
+- Adoption uncertain — but MVP is cheap; validate with the phone demo before investing more.
+
+---
+
+## agentic-base context (for the new session)
+- This is **project #2** under `/Users/kd/Sid/agentic-base/` (project #1 = `mcp-architect`, already published: GitHub + PyPI + Glama).
+- **Follow the OSS launch playbook:** `/Users/kd/Sid/agentic-base/PLAYBOOK.md` — it documents the exact, battle-tested steps (build → test → public GitHub repo via SSH → PyPI `twine upload` → awesome-list PR with Glama badge → CI → launch posts). Reuse it.
+- **Git/GitHub gotcha (important):** this Mac has a cached HTTPS login for a different account (`git-aman11`). **Always use SSH remotes** (`git@github.com:kannajune/agent-leash.git`) so pushes go out as `kannajune`. SSH key is already set up.
+- **PR practice even solo:** branch → PR → CI green → merge (the owner liked this).
+- Commit identity: `Kannan Dharmalingam <kannajune@gmail.com>`. **No Claude attribution in commit messages** (owner preference).
+- When ready to publish: create an **empty PUBLIC repo** `kannajune/agent-leash` on GitHub (owner does this), then push via SSH.

@@ -1,0 +1,17 @@
+{
+  "_comment": "Add this to ~/.claude/settings.json (or .claude/settings.json in a project). The 600s timeout matches Claude Code's PreToolUse hook max; keep AGENT_LEASH_TIMEOUT below it.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-leash-hook",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}
