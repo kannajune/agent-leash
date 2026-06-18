@@ -12,6 +12,11 @@ def _env(name: str, default: str = "") -> str:
     return os.environ.get(name, default)
 
 
+# Shared secret protecting the relay. Set the SAME value in the relay's env and
+# the hook's env. When empty the relay runs open (fine for localhost-only); set
+# it before exposing the relay beyond your machine (tunnel / VPS).
+TOKEN = _env("AGENT_LEASH_TOKEN", "")
+
 # Where the hook reaches the relay (the relay runs on your laptop or a small VPS).
 RELAY_URL = _env("AGENT_LEASH_RELAY_URL", "http://127.0.0.1:8787")
 

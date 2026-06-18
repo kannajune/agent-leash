@@ -56,6 +56,7 @@ link and decide.
 ### Config (env vars)
 | Var | Default | Purpose |
 |---|---|---|
+| `AGENT_LEASH_TOKEN` | — | shared secret protecting the relay — **set this before exposing the relay beyond localhost** |
 | `AGENT_LEASH_RELAY_URL` | `http://127.0.0.1:8787` | where the hook reaches the relay |
 | `AGENT_LEASH_PUBLIC_URL` | = relay url | public link used in the push (use a tunnel/VPS for a remote phone) |
 | `AGENT_LEASH_TIMEOUT` | `300` | seconds to wait for a decision (keep < hook's 600s) |

@@ -16,7 +16,7 @@ import json
 import time
 import uuid
 
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from . import config, notify
@@ -27,9 +27,23 @@ app = FastAPI(title="agent-leash relay")
 _REQUESTS: dict[str, dict] = {}
 
 
+def _check_token(provided: str | None) -> None:
+    """Enforce the shared secret when one is configured."""
+    if config.TOKEN and provided != config.TOKEN:
+        raise HTTPException(401, "invalid or missing token")
+
+
+def _token_qs() -> str:
+    return f"?t={config.TOKEN}" if config.TOKEN else ""
+
+
 @app.post("/request")
-async def create_request(payload: dict) -> JSONResponse:
+async def create_request(
+    payload: dict,
+    x_agent_leash_token: str | None = Header(default=None),
+) -> JSONResponse:
     """Called by the hook. Registers a pending approval and pings the phone."""
+    _check_token(x_agent_leash_token)
     rid = uuid.uuid4().hex[:12]
     _REQUESTS[rid] = {
         "tool": payload.get("tool", "?"),
@@ -41,7 +55,7 @@ async def create_request(payload: dict) -> JSONResponse:
         "updated_input": None,
         "ts": time.time(),
     }
-    approve_url = f"{config.PUBLIC_URL}/r/{rid}"
+    approve_url = f"{config.PUBLIC_URL}/r/{rid}{_token_qs()}"
     notify.send(
         title=f"Approve: {_REQUESTS[rid]['tool']}",
         body=_summary(_REQUESTS[rid]),
@@ -51,8 +65,12 @@ async def create_request(payload: dict) -> JSONResponse:
 
 
 @app.get("/decision/{rid}")
-async def get_decision(rid: str) -> JSONResponse:
+async def get_decision(
+    rid: str,
+    x_agent_leash_token: str | None = Header(default=None),
+) -> JSONResponse:
     """Called by the hook in a poll loop until status == decided."""
+    _check_token(x_agent_leash_token)
     req = _REQUESTS.get(rid)
     if not req:
         raise HTTPException(404, "unknown request")
@@ -65,7 +83,8 @@ async def get_decision(rid: str) -> JSONResponse:
 
 
 @app.get("/r/{rid}", response_class=HTMLResponse)
-async def approval_page(rid: str) -> str:
+async def approval_page(rid: str, t: str | None = Query(default=None)) -> str:
+    _check_token(t)
     req = _REQUESTS.get(rid)
     if not req:
         return "<h2>Request not found or expired.</h2>"
@@ -73,6 +92,7 @@ async def approval_page(rid: str) -> str:
         return f"<h2>Already decided: {req['decision']}</h2>"
     return _PAGE.format(
         rid=rid,
+        token_qs=_token_qs(),
         tool=html.escape(req["tool"]),
         details=html.escape(json.dumps(req["input"], indent=2)),
         cwd=html.escape(req["cwd"]),
@@ -85,7 +105,9 @@ async def submit_decision(
     action: str = Form(...),          # "allow" | "deny"
     reason: str = Form(""),            # correction / guidance when denying
     edited_input: str = Form(""),      # optional rewritten tool input (JSON)
+    t: str | None = Query(default=None),
 ) -> str:
+    _check_token(t)
     req = _REQUESTS.get(rid)
     if not req:
         return "<h2>Request not found or expired.</h2>"
@@ -120,7 +142,7 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8">
  <p class="muted">cwd: {cwd}</p>
  <h2 style="font-size:16px">{tool}</h2>
  <pre>{details}</pre>
- <form method="post" action="/r/{rid}">
+ <form method="post" action="/r/{rid}{token_qs}">
    <label>Correction / instruction (sent to Claude on reject)</label>
    <textarea name="reason" rows="3" placeholder="e.g. don't delete that — update it instead"></textarea>
    <label>Edited tool input (optional JSON — runs this instead)</label>
@@ -133,6 +155,12 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8">
 
 def main() -> None:
     import uvicorn
+    if not config.TOKEN:
+        print(
+            "[agent-leash] ⚠️  AGENT_LEASH_TOKEN is not set — relay is OPEN. "
+            "Fine for localhost, but set a token before exposing it via a tunnel/VPS.",
+            flush=True,
+        )
     host = config.RELAY_URL.split("//")[-1].split(":")[0] or "127.0.0.1"
     port = int(config.RELAY_URL.rsplit(":", 1)[-1]) if ":" in config.RELAY_URL.split("//")[-1] else 8787
     uvicorn.run(app, host=host, port=port)
