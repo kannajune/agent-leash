@@ -53,6 +53,10 @@ export AGENT_LEASH_NTFY_TOPIC="your-unique-topic-name"
 Now run Claude Code — when it wants to run a tool, your phone buzzes; tap the
 link and decide.
 
+> 📱 **Using a real phone (not localhost)?** See **[DEPLOY.md](DEPLOY.md)** for
+> exposing the relay via Tailscale / Cloudflare Tunnel / ngrok — and **always set
+> `AGENT_LEASH_TOKEN`** when you do.
+
 ### Config (env vars)
 | Var | Default | Purpose |
 |---|---|---|
