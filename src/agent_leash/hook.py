@@ -48,6 +48,8 @@ def _decision(kind: str, reason: str = "", updated_input: dict | None = None) ->
 def _http_json(url: str, payload: dict | None = None) -> dict:
     data = json.dumps(payload).encode() if payload is not None else None
     headers = {"Content-Type": "application/json"} if data else {}
+    if config.TOKEN:
+        headers["X-Agent-Leash-Token"] = config.TOKEN
     req = urllib.request.Request(url, data=data, headers=headers, method="POST" if data else "GET")
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read() or "{}")

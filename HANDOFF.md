@@ -98,19 +98,23 @@ agent-leash/
       hook posts→polls; "phone" reject-with-correction returns `deny` + reason to the hook;
       relay-down falls back to `ask`. All confirmed working.
 
+### Also done (in PRs / merged)
+- [x] **Tests + CI** (`tests/`, `.github/workflows/ci.yml`) — relay request→decide→poll,
+      allow/deny-with-correction, edited-input, 404s, page render; hook auto-allow +
+      relay-unreachable fallback. CI on Python 3.10 & 3.12. (branch `feat/tests-ci`)
+- [x] **Auth token** — `AGENT_LEASH_TOKEN` shared secret guards every relay endpoint
+      (header for the hook, `?t=` for the phone link); relay warns if running open.
+      (branch `feat/auth-token`)
+
 ### TODO (next session, in order)
-1. **Write tests** (`tests/`): relay request→decide→poll cycle (use FastAPI TestClient),
-   hook auto-allow path, hook timeout fallback. Wire a CI workflow (copy mcp-architect's `.github/workflows/ci.yml`).
-5. **Real hook test in Claude Code**: register the snippet in `~/.claude/settings.json`,
-   set `AGENT_LEASH_NTFY_TOPIC`, install the ntfy app on the phone, run a Claude Code
-   command, approve from the phone. THIS is the demo.
-6. **Remote reachability**: for a real phone, the relay's `PUBLIC_URL` must be reachable.
-   Document using `cloudflared`/`ngrok` tunnel, or running the relay on a small VPS.
-   (Security: the relay exposes tool calls — add a shared-secret token on endpoints.)
-7. **Harden**: add an auth token (header/query) so randoms can't hit `/r/{id}`;
-   expire old requests; optional allow/deny rules by command pattern.
-8. **Polish for launch**: README demo GIF (approve on phone → Claude continues),
-   then follow the OSS launch process below.
+1. **Remote reachability** — for a real phone, the relay's `PUBLIC_URL` must be reachable.
+   Document a `cloudflared`/`ngrok` tunnel, or running the relay on a small VPS. Always
+   set `AGENT_LEASH_TOKEN` when exposed.
+2. **Real hook test in Claude Code** — register `examples/claude-settings-snippet.json` in
+   `~/.claude/settings.json`, set `AGENT_LEASH_NTFY_TOPIC` + `AGENT_LEASH_TOKEN`, install the
+   ntfy app, run a Claude Code command, approve from the phone. **Record the demo GIF here.**
+3. **Nice-to-haves**: expire old pending requests; optional allow/deny rules by command pattern.
+4. **Publish** — follow `/Users/kd/Sid/agentic-base/PLAYBOOK.md` (PyPI + awesome-list + Glama), like mcp-architect.
 
 ---
 
