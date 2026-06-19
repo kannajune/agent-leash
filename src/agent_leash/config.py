@@ -20,6 +20,11 @@ TOKEN = _env("AGENT_LEASH_TOKEN", "")
 # Where the hook reaches the relay (the relay runs on your laptop or a small VPS).
 RELAY_URL = _env("AGENT_LEASH_RELAY_URL", "http://127.0.0.1:8787")
 
+# Address/port the relay binds to. 127.0.0.1 = localhost only; set HOST=0.0.0.0
+# to accept connections from your phone (LAN IP / tunnel). Always set a TOKEN then.
+HOST = _env("AGENT_LEASH_HOST", "127.0.0.1")
+PORT = int(_env("AGENT_LEASH_PORT", "8787"))
+
 # How long the hook waits for a phone decision before falling back (seconds).
 # Must stay under Claude Code's PreToolUse hook timeout (default 600s).
 DECISION_TIMEOUT = int(_env("AGENT_LEASH_TIMEOUT", "300"))
