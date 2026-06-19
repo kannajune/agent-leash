@@ -1,13 +1,13 @@
 {
-  "_comment": "Add this to ~/.claude/settings.json (or .claude/settings.json in a project). The 600s timeout matches Claude Code's PreToolUse hook max; keep AGENT_LEASH_TIMEOUT below it.",
+  "_comment": "Add to ~/.claude/settings.json (global) or <project>/.claude/settings.json (project-scoped). Replace the command path with your real one from `which agent-leash-hook` — use the ABSOLUTE path (the Claude Desktop app's hook PATH is limited). matcher 'Bash' gates shell commands only. Keep AGENT_LEASH_TIMEOUT below the 600s hook timeout.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "*",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "agent-leash-hook",
+            "command": "/Users/you/.local/bin/agent-leash-hook",
             "timeout": 600
           }
         ]
