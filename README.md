@@ -71,6 +71,27 @@ link and decide.
 
 ---
 
+## Where to enable it (scope)
+
+Install once, run **one** relay — then **where you register the hook decides what it guards.** It plugs into Claude Code's `PreToolUse` hook and works with **both the Claude Desktop app and the CLI** (both read these settings).
+
+| Put the hook in… | Guards | Use for |
+|---|---|---|
+| `~/.claude/settings.json` (**global**) | every session, every project | supervise *all* agent shell commands |
+| `<project>/.claude/settings.json` (**project**) | only sessions opened in that project | guard one repo (prod / infra / trading) |
+| `<project>/.claude/settings.local.json` (**local**) | that project, just you (uncommitted) | personal, per-repo |
+
+- A session loads hooks **at startup**, and only from its **project root** — *not* subfolders. Open the session in the folder whose settings has the hook, and restart after editing settings.
+- Only **Bash** is gated by the example matcher; read-only tools are auto-approved — so you're pinged for shell commands, not every file read.
+- **Recommended:** per-project on sensitive repos for day-to-day work; global when you're letting an agent run on its own.
+
+## Gotchas
+
+- **Long-running servers block.** Approving `npm run dev` makes Claude's terminal wait on a process that never exits — that's normal, *not* agent-leash. Ask Claude to start servers **in the background**.
+- **Keep the relay up.** If it's down, gated commands fall back to Claude's normal in-app prompt (graceful, not broken). For always-on, run the relay as a service — see [DEPLOY.md](DEPLOY.md).
+
+---
+
 ## Why not just…
 - **`--dangerously-skip-permissions`?** That approves *everything*, blind. This keeps you in control of the risky calls only.
 - **Allowlists in settings.json?** Great for known-safe commands — use both. agent-leash covers the *unpredictable* calls you can't pre-list, while away from the keyboard.
