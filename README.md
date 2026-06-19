@@ -37,18 +37,25 @@ Claude Code (laptop)
 ## Quickstart (local loop)
 
 ```bash
-pip install agent-leash         # (once published; for now: pip install -e .)
+# Recommended: install globally with pipx (isolated deps, command on PATH)
+pipx install agent-leash        # or: pip install --user agent-leash
 
 # 1. run the relay
 agent-leash-relay
 
-# 2. register the hook in ~/.claude/settings.json
-#    (see examples/claude-settings-snippet.json)
+# 2. register the hook in ~/.claude/settings.json (see examples/)
+#    ⚠️ use the ABSOLUTE path to the hook — see note below
 
 # 3. get phone pushes via ntfy (free, no account):
 export AGENT_LEASH_NTFY_TOPIC="your-unique-topic-name"
 #    install the "ntfy" app and subscribe to that topic
 ```
+
+> **Use the absolute path for the hook command in `settings.json`.** The Claude
+> **Desktop app** spawns hooks with a *limited* `PATH`, so a bare `agent-leash-hook`
+> can fail to resolve there. Find the real path with `which agent-leash-hook`
+> (e.g. `~/.local/bin/agent-leash-hook` after a pipx install) and use that exact
+> path in the hook's `command`.
 
 Now run Claude Code — when it wants to run a tool, your phone buzzes; tap the
 link and decide.
