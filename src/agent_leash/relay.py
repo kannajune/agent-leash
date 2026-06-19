@@ -155,15 +155,14 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8">
 
 def main() -> None:
     import uvicorn
-    if not config.TOKEN:
+    if config.HOST != "127.0.0.1" and not config.TOKEN:
         print(
-            "[agent-leash] ⚠️  AGENT_LEASH_TOKEN is not set — relay is OPEN. "
-            "Fine for localhost, but set a token before exposing it via a tunnel/VPS.",
+            "[agent-leash] ⚠️  Binding to {} with NO AGENT_LEASH_TOKEN — anyone on the "
+            "network can approve. Set AGENT_LEASH_TOKEN!".format(config.HOST),
             flush=True,
         )
-    host = config.RELAY_URL.split("//")[-1].split(":")[0] or "127.0.0.1"
-    port = int(config.RELAY_URL.rsplit(":", 1)[-1]) if ":" in config.RELAY_URL.split("//")[-1] else 8787
-    uvicorn.run(app, host=host, port=port)
+    print(f"[agent-leash] relay on {config.HOST}:{config.PORT}", flush=True)
+    uvicorn.run(app, host=config.HOST, port=config.PORT)
 
 
 if __name__ == "__main__":
