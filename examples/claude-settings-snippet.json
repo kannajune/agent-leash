@@ -1,5 +1,5 @@
 {
-  "_comment": "Add to ~/.claude/settings.json (global) or <project>/.claude/settings.json (project-scoped). Replace the command path with your real one from `which agent-leash-hook` — use the ABSOLUTE path (the Claude Desktop app's hook PATH is limited). matcher 'Bash' gates shell commands only. Keep AGENT_LEASH_TIMEOUT below the 600s hook timeout.",
+  "_comment": "Add to ~/.claude/settings.json (global) or <project>/.claude/settings.json (project-scoped). Replace the command path with your real one from `which steerd-hook` — use the ABSOLUTE path (the Claude Desktop app's hook PATH is limited). matcher 'Bash' gates shell commands only. Keep STEERD_TIMEOUT below the 600s hook timeout.",
   "hooks": {
     "PreToolUse": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/you/.local/bin/agent-leash-hook",
+            "command": "/Users/you/.local/bin/steerd-hook",
             "timeout": 600
           }
         ]

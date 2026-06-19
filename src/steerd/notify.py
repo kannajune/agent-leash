@@ -18,7 +18,7 @@ def _post(url: str, data: bytes, headers: dict[str, str]) -> None:
     try:
         urllib.request.urlopen(req, timeout=10).read()
     except Exception as exc:  # noqa: BLE001 - notification failure must not crash the hook
-        print(f"[agent-leash] notification failed: {exc}", flush=True)
+        print(f"[steerd] notification failed: {exc}", flush=True)
 
 
 def send(title: str, body: str, approve_url: str) -> None:
@@ -47,4 +47,4 @@ def send(title: str, body: str, approve_url: str) -> None:
         )
     if not config.NTFY_TOPIC and not config.TELEGRAM_BOT_TOKEN:
         # No backend configured — at least print the link so the loop still works.
-        print(f"[agent-leash] approve at: {approve_url}", flush=True)
+        print(f"[steerd] approve at: {approve_url}", flush=True)

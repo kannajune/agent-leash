@@ -1,7 +1,7 @@
-# agent-leash — Session Handoff / Build Doc
+# steerd — Session Handoff / Build Doc
 
 > **Read this first.** This is a fresh-session handoff for continuing the build.
-> Project lives at `/Users/kd/Sid/agentic-base/agent-leash/`. Owner GitHub: **kannajune**.
+> Project lives at `/Users/kd/Sid/agentic-base/steerd/`. Owner GitHub: **kannajune**.
 
 ---
 
@@ -52,11 +52,11 @@ page** (delivered via ntfy or Telegram push). The phone just opens a link.
 
 ```
 Claude Code (laptop)
-  └─ PreToolUse hook = `agent-leash-hook` (reads tool JSON on stdin)
+  └─ PreToolUse hook = `steerd-hook` (reads tool JSON on stdin)
        ├─ auto-allow safe tools (Read/Glob/Grep/LS) -> return allow immediately
        └─ else: POST /request to relay  ──────────────┐
                                                        ▼
-                                         agent-leash relay (FastAPI)
+                                         steerd relay (FastAPI)
                                            ├─ sends push (ntfy / Telegram) with a link
                                            └─ serves mobile approval page  /r/{id}
                                                        ▲
@@ -70,13 +70,13 @@ Claude Code (laptop)
 ## File map (already scaffolded)
 
 ```
-agent-leash/
+steerd/
 ├── HANDOFF.md                     ← this file
 ├── README.md                      ← user-facing
 ├── LICENSE                        ← MIT
-├── pyproject.toml                 ← console scripts: agent-leash-relay, agent-leash-hook
+├── pyproject.toml                 ← console scripts: steerd-relay, steerd-hook
 ├── examples/claude-settings-snippet.json   ← how to register the hook
-├── src/agent_leash/
+├── src/steerd/
 │   ├── config.py                  ← env-var config (relay url, timeout, ntfy/telegram, auto-allow)
 │   ├── notify.py                  ← send push (ntfy + telegram), stdlib-only
 │   ├── relay.py                   ← FastAPI relay: /request /decision/{id} /r/{id}
@@ -102,13 +102,13 @@ agent-leash/
 - [x] **Tests + CI** (`tests/`, `.github/workflows/ci.yml`) — relay request→decide→poll,
       allow/deny-with-correction, edited-input, 404s, page render; hook auto-allow +
       relay-unreachable fallback. CI on Python 3.10 & 3.12. (branch `feat/tests-ci`)
-- [x] **Auth token** — `AGENT_LEASH_TOKEN` shared secret guards every relay endpoint
+- [x] **Auth token** — `STEERD_TOKEN` shared secret guards every relay endpoint
       (header for the hook, `?t=` for the phone link); relay warns if running open.
       (branch `feat/auth-token`)
 
 ### Status update (verified)
 - ✅ **End-to-end proven** in real Claude Code (CLI `claude -p`) — phone push → approve → command runs. Tested twice incl. the live trading project.
-- ✅ Auth token, bind-host (`AGENT_LEASH_HOST/PORT`), tests + CI, scope/usage docs, pipx-install docs — all merged to `main`.
+- ✅ Auth token, bind-host (`STEERD_HOST/PORT`), tests + CI, scope/usage docs, pipx-install docs — all merged to `main`.
 - ✅ Confirmed: hooks load at **session start**, from the **project root only** (not subfolders); works in **both** the Desktop app and CLI; only **Bash** gated.
 - ⚠️ Gotcha learned: approving a **long-running server** (`npm run dev`) blocks Claude's terminal (server never exits) — run servers in the background.
 
@@ -118,7 +118,7 @@ agent-leash/
 3. **Nice-to-haves**: expire old pending requests; optional allow/deny rules by command pattern; launchd service for an always-on relay.
 
 ### Future idea — npm port (after the Python version has traction)
-Reimplement as an **npm package** so Node users can `npx agent-leash-hook` with **zero Python**:
+Reimplement as an **npm package** so Node users can `npx steerd-hook` with **zero Python**:
 - Hook = ~30 lines of JS (read stdin → HTTP POST/poll relay → print the `hookSpecificOutput` JSON).
 - Relay = a small Express app mirroring `/request`, `/decision/{id}`, `/r/{id}`.
 - Why: a huge share of Claude Code users live in Node-land; `npx` is friction-free → wider adoption. Treat as a sister package / v2.
@@ -126,7 +126,7 @@ Reimplement as an **npm package** so Node users can `npx agent-leash-hook` with 
 ---
 
 ## Decisions already made
-- **Name:** `agent-leash` (control metaphor; "you hold the reins remotely").
+- **Name:** `steerd` (control metaphor; "you hold the reins remotely").
 - **Open source, MIT.** Paid is premature; would kill trust/adoption for a
   security-adjacent tool. Future "open-core" monetization = hosted relay / team
   audit logs — NOT now.
@@ -140,16 +140,16 @@ Reimplement as an **npm package** so Node users can `npx agent-leash-hook` with 
 
 ## How to run the local loop (quick)
 ```bash
-cd /Users/kd/Sid/agentic-base/agent-leash
+cd /Users/kd/Sid/agentic-base/steerd
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 # terminal 1: relay
-.venv/bin/agent-leash-relay
+.venv/bin/steerd-relay
 # terminal 2: simulate a hook call
 echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf build"},"cwd":"/tmp"}' \
-  | AGENT_LEASH_RELAY_URL=http://127.0.0.1:8787 .venv/bin/agent-leash-hook
+  | STEERD_RELAY_URL=http://127.0.0.1:8787 .venv/bin/steerd-hook
 # open the printed approve URL in a browser, click Approve/Reject, watch the hook return.
 ```
-Set `AGENT_LEASH_NTFY_TOPIC=<your-unique-topic>` and install the **ntfy** app to get phone pushes.
+Set `STEERD_NTFY_TOPIC=<your-unique-topic>` and install the **ntfy** app to get phone pushes.
 
 ---
 
@@ -164,7 +164,7 @@ Set `AGENT_LEASH_NTFY_TOPIC=<your-unique-topic>` and install the **ntfy** app to
 ## agentic-base context (for the new session)
 - This is **project #2** under `/Users/kd/Sid/agentic-base/` (project #1 = `mcp-architect`, already published: GitHub + PyPI + Glama).
 - **Follow the OSS launch playbook:** `/Users/kd/Sid/agentic-base/PLAYBOOK.md` — it documents the exact, battle-tested steps (build → test → public GitHub repo via SSH → PyPI `twine upload` → awesome-list PR with Glama badge → CI → launch posts). Reuse it.
-- **Git/GitHub gotcha (important):** this Mac has a cached HTTPS login for a different account (`git-aman11`). **Always use SSH remotes** (`git@github.com:kannajune/agent-leash.git`) so pushes go out as `kannajune`. SSH key is already set up.
+- **Git/GitHub gotcha (important):** this Mac has a cached HTTPS login for a different account (`git-aman11`). **Always use SSH remotes** (`git@github.com:kannajune/steerd.git`) so pushes go out as `kannajune`. SSH key is already set up.
 - **PR practice even solo:** branch → PR → CI green → merge (the owner liked this).
 - Commit identity: `Kannan Dharmalingam <kannajune@gmail.com>`. **No Claude attribution in commit messages** (owner preference).
-- When ready to publish: create an **empty PUBLIC repo** `kannajune/agent-leash` on GitHub (owner does this), then push via SSH.
+- When ready to publish: create an **empty PUBLIC repo** `kannajune/steerd` on GitHub (owner does this), then push via SSH.

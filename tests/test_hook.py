@@ -8,7 +8,7 @@ import sys
 def _run_hook(event: dict, env_extra: dict | None = None, timeout: int = 30) -> dict:
     env = {**os.environ, **(env_extra or {})}
     proc = subprocess.run(
-        [sys.executable, "-m", "agent_leash.hook"],
+        [sys.executable, "-m", "steerd.hook"],
         input=json.dumps(event),
         capture_output=True, text=True, env=env, timeout=timeout,
     )
@@ -26,7 +26,7 @@ def test_auto_allow_safe_tool():
 def test_relay_unreachable_falls_back_to_ask():
     out = _run_hook(
         {"tool_name": "Bash", "tool_input": {"command": "ls"}, "cwd": "/tmp"},
-        env_extra={"AGENT_LEASH_RELAY_URL": "http://127.0.0.1:9", "AGENT_LEASH_AUTO_ALLOW": ""},
+        env_extra={"STEERD_RELAY_URL": "http://127.0.0.1:9", "STEERD_AUTO_ALLOW": ""},
     )
     assert out["permissionDecision"] == "ask"
     assert "unreachable" in out["permissionDecisionReason"]

@@ -1,7 +1,7 @@
 """Relay request -> decide -> poll cycle (FastAPI TestClient, no network)."""
 from fastapi.testclient import TestClient
 
-from agent_leash.relay import app
+from steerd.relay import app
 
 client = TestClient(app)
 

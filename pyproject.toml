@@ -1,5 +1,5 @@
 [project]
-name = "agent-leash"
+name = "steerd"
 version = "0.1.0"
 description = "Approve, reject, or correct your AI coding agent's actions from your phone — a remote-approval relay for Claude Code's PreToolUse hook."
 readme = "README.md"
@@ -20,12 +20,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kannajune/agent-leash"
-Issues = "https://github.com/kannajune/agent-leash/issues"
+Homepage = "https://github.com/kannajune/steerd"
+Issues = "https://github.com/kannajune/steerd/issues"
 
 [project.scripts]
-agent-leash-relay = "agent_leash.relay:main"
-agent-leash-hook = "agent_leash.hook:main"
+steerd-relay = "steerd.relay:main"
+steerd-hook = "steerd.hook:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "httpx>=0.27"]
@@ -35,4 +35,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_leash"]
+packages = ["src/steerd"]

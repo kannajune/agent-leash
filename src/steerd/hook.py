@@ -8,7 +8,7 @@ Register in ~/.claude/settings.json:
   "hooks": {
     "PreToolUse": [
       { "matcher": "*", "hooks": [
-        { "type": "command", "command": "agent-leash-hook", "timeout": 600 }
+        { "type": "command", "command": "steerd-hook", "timeout": 600 }
       ]}
     ]
   }
@@ -49,7 +49,7 @@ def _http_json(url: str, payload: dict | None = None) -> dict:
     data = json.dumps(payload).encode() if payload is not None else None
     headers = {"Content-Type": "application/json"} if data else {}
     if config.TOKEN:
-        headers["X-Agent-Leash-Token"] = config.TOKEN
+        headers["X-Steerd-Token"] = config.TOKEN
     req = urllib.request.Request(url, data=data, headers=headers, method="POST" if data else "GET")
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read() or "{}")
@@ -66,7 +66,7 @@ def main() -> None:
 
     # Auto-approve known-safe tools without bothering the phone.
     if tool in config.AUTO_ALLOW_TOOLS:
-        _decision("allow", "auto-approved by agent-leash policy")
+        _decision("allow", "auto-approved by steerd policy")
 
     # Register the request with the relay.
     try:
@@ -76,7 +76,7 @@ def main() -> None:
         )
         rid = created["id"]
     except Exception as exc:  # noqa: BLE001 - relay down -> fall back to normal prompt
-        _decision("ask", f"agent-leash relay unreachable ({exc}); falling back")
+        _decision("ask", f"steerd relay unreachable ({exc}); falling back")
 
     # Poll for the phone decision.
     deadline = time.time() + config.DECISION_TIMEOUT
@@ -96,8 +96,8 @@ def main() -> None:
 
     # No decision in time -> configured fallback.
     if config.ON_TIMEOUT == "allow":
-        _decision("allow", "agent-leash timeout -> auto-allow")
-    _decision("deny", "agent-leash timeout -> no approval received")
+        _decision("allow", "steerd timeout -> auto-allow")
+    _decision("deny", "steerd timeout -> no approval received")
 
 
 if __name__ == "__main__":

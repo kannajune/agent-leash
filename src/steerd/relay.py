@@ -1,4 +1,4 @@
-"""The agent-leash relay server.
+"""The steerd relay server.
 
 Holds pending approval requests in memory, notifies the phone, serves a mobile
 approval page, and hands the decision back to the polling hook.
@@ -21,7 +21,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from . import config, notify
 
-app = FastAPI(title="agent-leash relay")
+app = FastAPI(title="steerd relay")
 
 # request_id -> { tool, input, cwd, status, decision, reason, updated_input, ts }
 _REQUESTS: dict[str, dict] = {}
@@ -40,10 +40,10 @@ def _token_qs() -> str:
 @app.post("/request")
 async def create_request(
     payload: dict,
-    x_agent_leash_token: str | None = Header(default=None),
+    x_steerd_token: str | None = Header(default=None),
 ) -> JSONResponse:
     """Called by the hook. Registers a pending approval and pings the phone."""
-    _check_token(x_agent_leash_token)
+    _check_token(x_steerd_token)
     rid = uuid.uuid4().hex[:12]
     _REQUESTS[rid] = {
         "tool": payload.get("tool", "?"),
@@ -67,10 +67,10 @@ async def create_request(
 @app.get("/decision/{rid}")
 async def get_decision(
     rid: str,
-    x_agent_leash_token: str | None = Header(default=None),
+    x_steerd_token: str | None = Header(default=None),
 ) -> JSONResponse:
     """Called by the hook in a poll loop until status == decided."""
-    _check_token(x_agent_leash_token)
+    _check_token(x_steerd_token)
     req = _REQUESTS.get(rid)
     if not req:
         raise HTTPException(404, "unknown request")
@@ -129,7 +129,7 @@ def _summary(req: dict) -> str:
 
 _PAGE = """<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>agent-leash</title>
+<title>steerd</title>
 <style>
  body{{font-family:-apple-system,system-ui,sans-serif;margin:0;background:#0d1117;color:#c9d1d9;padding:18px}}
  h1{{font-size:18px}} pre{{background:#161b22;padding:12px;border-radius:8px;overflow:auto;font-size:13px}}
@@ -138,7 +138,7 @@ _PAGE = """<!doctype html><html><head><meta charset="utf-8">
  .allow{{background:#238636}} .deny{{background:#da3633}} label{{font-size:13px;color:#8b949e}}
  .muted{{color:#8b949e;font-size:13px}}
 </style></head><body>
- <h1>🐕 agent-leash — approve tool</h1>
+ <h1>🛞 steerd — approve tool</h1>
  <p class="muted">cwd: {cwd}</p>
  <h2 style="font-size:16px">{tool}</h2>
  <pre>{details}</pre>
@@ -157,11 +157,11 @@ def main() -> None:
     import uvicorn
     if config.HOST != "127.0.0.1" and not config.TOKEN:
         print(
-            "[agent-leash] ⚠️  Binding to {} with NO AGENT_LEASH_TOKEN — anyone on the "
-            "network can approve. Set AGENT_LEASH_TOKEN!".format(config.HOST),
+            "[steerd] ⚠️  Binding to {} with NO STEERD_TOKEN — anyone on the "
+            "network can approve. Set STEERD_TOKEN!".format(config.HOST),
             flush=True,
         )
-    print(f"[agent-leash] relay on {config.HOST}:{config.PORT}", flush=True)
+    print(f"[steerd] relay on {config.HOST}:{config.PORT}", flush=True)
     uvicorn.run(app, host=config.HOST, port=config.PORT)
 
 
