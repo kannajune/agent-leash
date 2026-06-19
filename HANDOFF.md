@@ -106,15 +106,22 @@ agent-leash/
       (header for the hook, `?t=` for the phone link); relay warns if running open.
       (branch `feat/auth-token`)
 
+### Status update (verified)
+- ✅ **End-to-end proven** in real Claude Code (CLI `claude -p`) — phone push → approve → command runs. Tested twice incl. the live trading project.
+- ✅ Auth token, bind-host (`AGENT_LEASH_HOST/PORT`), tests + CI, scope/usage docs, pipx-install docs — all merged to `main`.
+- ✅ Confirmed: hooks load at **session start**, from the **project root only** (not subfolders); works in **both** the Desktop app and CLI; only **Bash** gated.
+- ⚠️ Gotcha learned: approving a **long-running server** (`npm run dev`) blocks Claude's terminal (server never exits) — run servers in the background.
+
 ### TODO (next session, in order)
-1. **Remote reachability** — for a real phone, the relay's `PUBLIC_URL` must be reachable.
-   Document a `cloudflared`/`ngrok` tunnel, or running the relay on a small VPS. Always
-   set `AGENT_LEASH_TOKEN` when exposed.
-2. **Real hook test in Claude Code** — register `examples/claude-settings-snippet.json` in
-   `~/.claude/settings.json`, set `AGENT_LEASH_NTFY_TOPIC` + `AGENT_LEASH_TOKEN`, install the
-   ntfy app, run a Claude Code command, approve from the phone. **Record the demo GIF here.**
-3. **Nice-to-haves**: expire old pending requests; optional allow/deny rules by command pattern.
-4. **Publish** — follow `/Users/kd/Sid/agentic-base/PLAYBOOK.md` (PyPI + awesome-list + Glama), like mcp-architect.
+1. **Record the demo GIF** — re-run a gated command while screen-recording phone (approve) + terminal (Claude continues). Launch visual.
+2. **Publish** — follow `/Users/kd/Sid/agentic-base/PLAYBOOK.md` (PyPI first release = **0.1.0**, then awesome-list + Glama), like mcp-architect. (Release artifacts may already be built in `dist/`.)
+3. **Nice-to-haves**: expire old pending requests; optional allow/deny rules by command pattern; launchd service for an always-on relay.
+
+### Future idea — npm port (after the Python version has traction)
+Reimplement as an **npm package** so Node users can `npx agent-leash-hook` with **zero Python**:
+- Hook = ~30 lines of JS (read stdin → HTTP POST/poll relay → print the `hookSpecificOutput` JSON).
+- Relay = a small Express app mirroring `/request`, `/decision/{id}`, `/r/{id}`.
+- Why: a huge share of Claude Code users live in Node-land; `npx` is friction-free → wider adoption. Treat as a sister package / v2.
 
 ---
 
