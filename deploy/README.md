@@ -45,6 +45,15 @@ pipx install steerd
   cp deploy/steerd-relay.service ~/.config/systemd/user/
   systemctl --user daemon-reload && systemctl --user enable --now steerd-relay
   ```
+- **Windows:** run `pipx ensurepath` and reopen the terminal so `steerd-relay`
+  is found. Edit `deploy/windows/steerd-relay.bat` (token, ntfy topic, Tailscale
+  IP), then pick one:
+  - **Task Scheduler (no install):** Task Scheduler → *Create Task* → **Trigger:**
+    "At startup" → **Action:** *Start a program* → the `.bat` → tick **"Run whether
+    user is logged on or not"** + **"Run with highest privileges"**. Survives reboots.
+  - **NSSM (a real service):** download `nssm.exe`, then
+    `nssm install steerd-relay "C:\path\to\steerd-relay.bat"` and `nssm start steerd-relay`.
+
 It now restarts on reboot and keeps running.
 
 ### 3. Point the hook at the relay (work PC)
