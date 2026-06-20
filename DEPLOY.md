@@ -33,6 +33,10 @@ steerd-relay
 ```
 Your phone opens the link over the private tailnet. Still set a token.
 
+> 🔁 For an **always-on relay** (survives reboots) or a **dedicated relay PC** so
+> you can approve from *any* network — see [`deploy/`](deploy/README.md):
+> launchd/systemd service files + the full multi-machine Tailscale guide.
+
 ## Option B — Cloudflare Tunnel (quick public HTTPS, no account)
 ```bash
 # terminal 1

@@ -1,0 +1,25 @@
+# steerd relay as an always-on systemd service (Linux).
+#   1) Edit the CHANGE_ME values below.
+#   2) cp deploy/steerd-relay.service ~/.config/systemd/user/
+#   3) systemctl --user daemon-reload && systemctl --user enable --now steerd-relay
+#   Logs: journalctl --user -u steerd-relay -f
+#   (For boot-without-login: `sudo loginctl enable-linger $USER`)
+
+[Unit]
+Description=steerd relay (remote approval for AI coding agents)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=STEERD_TOKEN=CHANGE_ME_random_secret
+Environment=STEERD_HOST=0.0.0.0
+Environment=STEERD_NTFY_TOPIC=CHANGE_ME_unique_topic
+# the address your PHONE uses — this host's Tailscale IP (tailscale ip -4)
+Environment=STEERD_PUBLIC_URL=http://YOUR_TAILSCALE_IP:8787
+# run `which steerd-relay` and use that absolute path:
+ExecStart=%h/.local/bin/steerd-relay
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

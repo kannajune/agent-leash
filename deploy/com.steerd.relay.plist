@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  steerd relay as an always-on launchd service (macOS).
+  1) Edit the CHANGE_ME values below.
+  2) cp deploy/com.steerd.relay.plist ~/Library/LaunchAgents/
+  3) launchctl load ~/Library/LaunchAgents/com.steerd.relay.plist
+  Logs: /tmp/steerd-relay.log   ·   Stop: launchctl unload ~/Library/LaunchAgents/com.steerd.relay.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.steerd.relay</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <!-- run `which steerd-relay` and put the absolute path here -->
+    <string>/Users/YOU/.local/bin/steerd-relay</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>STEERD_TOKEN</key>        <string>CHANGE_ME_random_secret</string>
+    <key>STEERD_HOST</key>         <string>0.0.0.0</string>
+    <key>STEERD_NTFY_TOPIC</key>   <string>CHANGE_ME_unique_topic</string>
+    <!-- the address your PHONE uses — your Tailscale IP (tailscale ip -4) -->
+    <key>STEERD_PUBLIC_URL</key>   <string>http://YOUR_TAILSCALE_IP:8787</string>
+  </dict>
+
+  <key>RunAtLoad</key>   <true/>
+  <key>KeepAlive</key>   <true/>
+  <key>StandardOutPath</key> <string>/tmp/steerd-relay.log</string>
+  <key>StandardErrorPath</key><string>/tmp/steerd-relay.log</string>
+</dict>
+</plist>
