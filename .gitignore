@@ -22,3 +22,7 @@ env/
 .DS_Store
 .idea/
 .vscode/
+
+# internal dev/marketing notes — not for the public repo
+HANDOFF.md
+docs/awesome-claude-code-submission.md
